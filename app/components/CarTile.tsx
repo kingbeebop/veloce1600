@@ -1,18 +1,40 @@
+// components/CarTile.tsx
+"use client";
+
 import React from 'react';
+import { Box, Text, Heading } from '@chakra-ui/react';
 import { Car } from '../types/car';
+import { useRouter } from 'next/navigation';
 
 interface CarTileProps {
   car: Car;
-  onFetchDetails: (id: number) => void;
 }
 
-const CarTile: React.FC<CarTileProps> = ({ car, onFetchDetails }) => {
+const CarTile: React.FC<CarTileProps> = ({ car }) => {
+  const router = useRouter();
+
+  const handleClick = () => {
+    router.push(`/cars/${car.id}`);
+  };
+
   return (
-    <div className="car-tile">
-      <h3>{car.make} {car.model}</h3>
-      <p>Year: {car.year}</p>
-      <button onClick={() => onFetchDetails(car.id)}>Fetch Details</button>
-    </div>
+    <Box
+      borderWidth="1px"
+      borderRadius="lg"
+      p={4}
+      shadow="md"
+      onClick={handleClick}
+      _hover={{ shadow: "lg" }}
+      display="flex"
+      justifyContent="space-between"
+      alignItems="center"
+      cursor="pointer"
+    >
+      <Box display="flex" flexGrow={1} alignItems="center">
+        <Heading size="md" mr={4}>{car.make} {car.model}</Heading>
+      </Box>
+      <Text fontWeight="bold">${car.price}</Text>
+    </Box>
   );
 };
 

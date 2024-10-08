@@ -1,16 +1,15 @@
 export interface Car {
-    id: number;  // Assuming you have an ID field for each car
-    make: string;
-    model: string;
-    year: number;
-    vin: string;
-    mileage: number;
-    price: number;  // Decimal values can be represented as numbers in TypeScript
-    features: string;
-    condition: 'new' | 'used' | 'classic';  // Use union types for conditions
-    image?: string;  // Optional field
-    owner: number | null;  // Assuming owner is represented by user ID, nullable
-    created_at: string;  // ISO string representation of the date
-    updated_at: string;  // ISO string representation of the date
-  }
-  
+  id: number;  // Assuming you have an ID field for each car
+  make: string | null;  // Nullable
+  model: string | null;  // Nullable
+  year: number | null;  // Nullable
+  vin: string | null;  // Nullable
+  mileage: number | null;  // Nullable
+  price: number | null;  // Nullable
+  features: string | null;  // Nullable
+  condition: 'new' | 'used' | 'classic' | null;  // Nullable
+  image?: string | null;  // Optional and nullable
+  owner: number | null;  // Assuming owner is represented by user ID, nullable
+  created_at: string | null;  // Nullable
+  updated_at: string | null;  // Nullable
+}

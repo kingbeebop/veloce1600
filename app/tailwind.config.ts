@@ -9,11 +9,22 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        background: "#000000", // Black background
+        foreground: "#FFFFFF", // White text for contrast
+        primary: "#4A90E2", // Example primary color (blue)
+        secondary: "#E94E77", // Example secondary color (pink)
+        muted: "#B0B0B0", // Muted text color for less emphasis
+        // You can add more colors as needed
+      },
+      backgroundColor: {
+        page: "#000000", // Custom background for pages
+      },
+      textColor: {
+        page: "#FFFFFF", // Custom text color for pages
       },
     },
   },
   plugins: [],
 };
+
 export default config;
