@@ -20,10 +20,16 @@ from .views import CarList, CarDetail, OwnerList, OwnerDetail, SaleList, SaleDet
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    
+    # Car URLs
     path('cars/', CarList.as_view(), name='car-list'),
     path('cars/<int:pk>/', CarDetail.as_view(), name='car-detail'),
+    
+    # Owner URLs
     path('owners/', OwnerList.as_view(), name='owner-list'),
     path('owners/<int:pk>/', OwnerDetail.as_view(), name='owner-detail'),
+    
+    # Sale URLs
     path('sales/', SaleList.as_view(), name='sale-list'),
     path('sales/<int:pk>/', SaleDetail.as_view(), name='sale-detail'),
 ]
