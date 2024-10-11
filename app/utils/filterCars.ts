@@ -1,15 +1,28 @@
 // utils/filterCars.ts
 import { Car } from '../types/car';
+import { RootState } from '../redux/store'; // Make sure to import your RootState type
+import { useSelector } from 'react-redux';
 
-export const filterCars = (cars: Car[], filters: {
+export const filterCars = (filters: {
   searchTerm?: string;
   priceFilter?: { operator: 'greater' | 'less'; value: number } | null;
   conditionFilter?: 'New' | 'Used' | 'Classic' | null;
 }) => {
+  // Access allCars from the Redux store
+  const allCars: Car[] = useSelector((state: RootState) => state.cars.allCars);
+
   const { searchTerm, priceFilter, conditionFilter } = filters;
 
+  // Check if all filter fields are null, empty, or undefined
+  const areAllFiltersEmpty = !searchTerm && !priceFilter && !conditionFilter;
+
+  // If all filters are empty, return allCars
+  if (areAllFiltersEmpty) {
+    return allCars;
+  }
+
   // Start with all cars
-  let filteredCars = [...cars];
+  let filteredCars = [...allCars];
 
   // Apply search term filtering
   if (searchTerm) {

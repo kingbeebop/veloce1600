@@ -2,7 +2,6 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { Car } from '../../types/car';
 import { CarApiResponse } from '../../types/apiResponse';
 import { fetchCars as apiFetchCars, searchCarsFromAPI, submitCar } from '../../utils/api';
-import { filterCars as applyFilters } from '../../utils/filterCars'; // Import the utility function
 import { RootState } from '../store';
 
 interface PriceFilter {
@@ -74,9 +73,54 @@ const carSlice = createSlice({
     initialState,
     reducers: {
         filterCars(state, action: PayloadAction<{ filters: FilterState }>) {
-            const filteredResults = applyFilters(state.allCars, action.payload.filters);
-            state.cars = filteredResults;
-            state.count = filteredResults.length; // Update count based on current filtered cars
+            const { searchTerm, priceFilter, conditionFilter } = action.payload.filters;
+
+            // Check if all filter fields are null, empty, or undefined
+            const areAllFiltersEmpty = !searchTerm && !priceFilter && !conditionFilter;
+
+            // If all filters are empty, return allCars
+            if (areAllFiltersEmpty) {
+                state.cars = state.allCars; // Reset cars to allCars
+                state.count = state.allCars.length; // Update count based on allCars
+                return;
+            }
+
+            // Start with all cars
+            let filteredCars = [...state.allCars];
+
+            // Apply search term filtering
+            if (searchTerm) {
+                const searchStr = searchTerm.toLowerCase();
+                filteredCars = filteredCars.filter(car => {
+                    return (
+                        car.make?.toLowerCase().includes(searchStr) ||
+                        car.model?.toLowerCase().includes(searchStr) ||
+                        car.year?.toString().includes(searchStr)
+                    );
+                });
+            }
+
+            // Apply price filter if it exists
+            if (priceFilter) {
+                filteredCars = filteredCars.filter(car => {
+                    if (priceFilter.operator === 'greater') {
+                        return car.price != null && car.price > priceFilter.value;
+                    } else if (priceFilter.operator === 'less') {
+                        return car.price != null && car.price < priceFilter.value;
+                    }
+                    return true;
+                });
+            }
+
+            // Apply condition filter if it exists
+            if (conditionFilter) {
+                filteredCars = filteredCars.filter(car =>
+                    (car.condition && car.condition.toLowerCase() === conditionFilter.toLowerCase()) || car.condition == null
+                );
+            }
+
+            state.cars = filteredCars; // Update filtered cars
+            state.count = filteredCars.length; // Update count based on current filtered cars
         },
         setAllCars(state, action: PayloadAction<Car[]>) {
             state.allCars = action.payload; // Store fetched cars in allCars

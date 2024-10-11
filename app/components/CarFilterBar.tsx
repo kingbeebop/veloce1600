@@ -13,27 +13,23 @@ import {
 } from "@chakra-ui/react";
 import { SearchIcon, AddIcon, ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
 import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "../redux/store"; // Import RootState
+import { AppDispatch, RootState } from "../redux/store";
 import { updateFilters, resetAndFilterCars } from "../redux/slices/filterSlice";
-import { fetchCars } from "../redux/slices/carSlice";
+import { fetchCars, filterCars } from "../redux/slices/carSlice"; // Import filterCars
 import SubmitCar from "./SubmitCar";
 
 const CarFilterBar: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  
-  // Local state for controlled inputs
+
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [priceFilterType, setPriceFilterType] = useState<'greater' | 'less' | null>(null);
   const [priceValue, setPriceValue] = useState<number | null>(null);
   const [conditionFilter, setConditionFilter] = useState<'New' | 'Used' | 'Classic' | null>(null);
   const [isFiltersOpen, setIsFiltersOpen] = useState<boolean>(false);
 
-  // Get the filter state from Redux
   const filterState = useSelector((state: RootState) => state.filters);
-
-  // Set loading state based on filterState initialization
-  const isLoading = filterState === undefined; 
+  const isLoading = filterState === undefined;
 
   // Effect to handle filter updates
   useEffect(() => {
@@ -44,10 +40,15 @@ const CarFilterBar: React.FC = () => {
         : undefined,
       conditionFilter,
     };
-    
-    // Dispatch filters update only when local state changes
+
     dispatch(updateFilters(filters));
   }, [searchTerm, priceFilterType, priceValue, conditionFilter, dispatch]);
+
+  // New useEffect to call filterCars when filterState changes
+  useEffect(() => {
+    // Dispatch filterCars with the current filter state
+    dispatch(filterCars({filters: filterState}));
+  }, [filterState, dispatch]); // Dependencies array includes filterState
 
   const handleFetchCars = async () => {
     await dispatch(fetchCars({}));
@@ -55,13 +56,11 @@ const CarFilterBar: React.FC = () => {
 
   const handleSearch = () => {
     handleFetchCars();
-    setSearchTerm(""); // Optionally reset the search term after fetching
+    setSearchTerm("");
   };
 
   const handleClearFilters = () => {
-    // Dispatch the action to reset filters and refresh cars
     dispatch(resetAndFilterCars());
-    // Reset local state as well
     setSearchTerm("");
     setPriceFilterType(null);
     setPriceValue(null);
@@ -82,10 +81,10 @@ const CarFilterBar: React.FC = () => {
         <Input
           placeholder="Search cars..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)} // Controlled input
+          onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
-              handleSearch(); // Fetch cars when Enter is pressed
+              handleSearch();
             }
           }}
           width="150px"
@@ -128,7 +127,7 @@ const CarFilterBar: React.FC = () => {
               <Input
                 placeholder="Price"
                 value={priceValue === null ? "" : priceValue}
-                onChange={(e) => setPriceValue(e.target.value ? Number(e.target.value) : null)} // Keep as number or null
+                onChange={(e) => setPriceValue(e.target.value ? Number(e.target.value) : null)}
                 type="number"
                 min="0"
               />

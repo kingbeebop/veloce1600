@@ -65,8 +65,8 @@ export const updateFilters = (filter: Partial<FilterState>) => {
             conditionFilter: state.filters.conditionFilter,
         };
 
-        // Dispatch the filterCars action with the filtered payload
-        dispatch(filterCars({ filters: filtersPayload }));
+        // // Dispatch the filterCars action with the filtered payload
+        // dispatch(filterCars({ filters: filtersPayload }));
     };
 };
 
