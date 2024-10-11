@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react'; // Import useState
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchCars } from '../../redux/slices/carSlice'; // Ensure you're importing from the correct slice
 import { AppDispatch, RootState } from '../../redux/store';
@@ -10,12 +10,10 @@ import CarFilterBar from '../../components/CarFilterBar';
 
 const CarList: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
-  
-  // Map the correct part of the state using the "cars" slice.
   const { cars, allCars, loading, error } = useSelector((state: RootState) => state.cars); 
+  const [isLoading, setIsLoading] = useState(false); // Add loading state
 
   useEffect(() => {
-    // Dispatch the correct action to fetch cars
     dispatch(fetchCars({}));
   }, [dispatch]);
 
@@ -24,7 +22,8 @@ const CarList: React.FC = () => {
     console.log('All Cars:', allCars);
   }, [cars, allCars]);
 
-  if (loading) {
+  // Show loading spinner if loading is true or when navigating to a new page
+  if (loading || isLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
         <Spinner size="xl" />
@@ -43,17 +42,17 @@ const CarList: React.FC = () => {
 
   return (
     <Box>
-      <CarFilterBar /> {/* Add the CarFilterBar here */}
+      <CarFilterBar />
       <Box display="flex" justifyContent="center" width="100%">
         <Grid
-          templateColumns="1fr" // Ensures one tile per row
+          templateColumns="1fr"
           gap={6}
-          maxWidth="600px" // Adjust as needed for the width of the tiles
-          width="100%"      // Ensures it takes the full width of the container
-          paddingX={4}     // Optional: adds some horizontal padding
+          maxWidth="600px"
+          width="100%"
+          paddingX={4}
         >
           {cars.map((car) => (
-            <CarTile key={car.id} car={car} />
+            <CarTile key={car.id} car={car} setLoading={setIsLoading} />
           ))}
         </Grid>
       </Box>

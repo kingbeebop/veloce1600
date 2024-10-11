@@ -8,16 +8,17 @@ import { useRouter } from 'next/navigation';
 
 interface CarTileProps {
   car: Car;
+  setLoading: (loading: boolean) => void; // Pass setLoading function as a prop
 }
 
-const CarTile: React.FC<CarTileProps> = ({ car }) => {
+const CarTile: React.FC<CarTileProps> = ({ car, setLoading }) => {
   const router = useRouter();
 
   const handleClick = () => {
+    setLoading(true); // Set loading to true when clicked
     router.push(`/cars/${car.id}`);
   };
 
-  // Determine the source for the Avatar
   const avatarSrc = car.image ? car.image : null; // Use car.image if it's not null
   const defaultAvatar = "🚗"; // Car emoji for default avatar
 
@@ -35,25 +36,23 @@ const CarTile: React.FC<CarTileProps> = ({ car }) => {
       cursor="pointer"
     >
       <Box display="flex" flexGrow={1} alignItems="center">
-        {/* Conditional rendering of Avatar */}
         {avatarSrc ? (
           <Avatar
-            src={avatarSrc} // Directly use avatarSrc
-            size="md" // Size of the Avatar
-            mr={4} // Margin to space it from the text
+            src={avatarSrc}
+            size="md"
+            mr={4}
           />
         ) : (
           <Avatar
-            name={defaultAvatar} // Set name for default avatar
-            bg="gray.300" // Grey background for default
-            color="black" // Text color for default
-            size="md" // Size of the Avatar
-            mr={4} // Margin to space it from the text
+            name={defaultAvatar}
+            bg="gray.300"
+            color="black"
+            size="md"
+            mr={4}
           >
-            {defaultAvatar} {/* Show car emoji as fallback */}
+            {defaultAvatar}
           </Avatar>
         )}
-
         <Heading size="md">{car.make} {car.model}</Heading>
       </Box>
       <Text fontWeight="bold">${car.price}</Text>
