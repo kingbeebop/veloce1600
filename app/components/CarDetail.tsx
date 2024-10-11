@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
-import { Box, Button, Flex, FormControl, FormLabel, Input, Select, Image, Spinner, useToast, Text } from '@chakra-ui/react';
+import {
+  Box,
+  Flex,
+  FormControl,
+  FormLabel,
+  Input,
+  Select,
+  Image,
+  useToast,
+  IconButton,
+} from '@chakra-ui/react';
+import { AiOutlineEdit, AiOutlineDelete } from 'react-icons/ai'; // Import icons
 import { updateCar, deleteCar } from '../utils/api';
 import { Car, CarData } from '../types/car';
 
@@ -97,20 +108,15 @@ const CarDetail: React.FC<CarDetailProps> = ({ car, carId }) => {
   };
 
   return (
-    <Flex direction="column" align="center" justify="center" py={8}>
-      {/* Car Image */}
-      {currentImage && (
-        <Image
-          src={currentImage}
-          alt="Current Car"
-          boxSize="300px"
-          objectFit="cover"
-          mb={8}
-          borderRadius="md"
-        />
-      )}
-
-      {/* Car Form */}
+    <Flex
+      direction="column"
+      align="center"
+      justify="center"
+      py={8}
+      w="100%"
+      maxW="1200px"
+      mx="auto"
+    >
       <Box
         as="form"
         onSubmit={handleSubmit}
@@ -118,135 +124,157 @@ const CarDetail: React.FC<CarDetailProps> = ({ car, carId }) => {
         p={8}
         borderRadius="md"
         boxShadow="lg"
-        w={["100%", "70%", "40%"]}
+        display="flex"
+        flexDirection="column"
+        height="90vh" // Constrain height to 90% of the viewport
+        overflowY="hidden" // Prevent overflow
       >
-        <Text fontSize="2xl" mb={4} fontWeight="bold" textAlign="center">
-          Car Details
-        </Text>
-
-        {/* Success/Error Messages will be shown as Chakra toasts */}
-
-        {/* Make */}
-        <FormControl id="make" mb={4} isRequired>
-          <FormLabel>Make</FormLabel>
-          <Input
-            type="text"
-            name="make"
-            value={carData.make || ''}
-            onChange={handleChange}
-            placeholder="Make"
+        {/* Edit and Delete Icon Buttons */}
+        <Flex justify="flex-end">
+          <IconButton
+            icon={<AiOutlineEdit />}
+            colorScheme="blue"
+            onClick={handleSubmit}
+            aria-label="Edit Car"
+            isLoading={loading}
+            mr={2}
           />
-        </FormControl>
-
-        {/* Model */}
-        <FormControl id="model" mb={4} isRequired>
-          <FormLabel>Model</FormLabel>
-          <Input
-            type="text"
-            name="model"
-            value={carData.model || ''}
-            onChange={handleChange}
-            placeholder="Model"
+          <IconButton
+            icon={<AiOutlineDelete />}
+            colorScheme="red"
+            onClick={handleDelete}
+            aria-label="Delete Car"
           />
-        </FormControl>
+        </Flex>
 
-        {/* Year */}
-        <FormControl id="year" mb={4} isRequired>
-          <FormLabel>Year</FormLabel>
-          <Input
-            type="number"
-            name="year"
-            value={carData.year || ''}
-            onChange={handleChange}
-            placeholder="Year"
-          />
-        </FormControl>
-
-        {/* VIN */}
-        <FormControl id="vin" mb={4}>
-          <FormLabel>VIN</FormLabel>
-          <Input
-            type="text"
-            name="vin"
-            value={carData.vin || ''}
-            onChange={handleChange}
-            placeholder="VIN"
-          />
-        </FormControl>
-
-        {/* Mileage */}
-        <FormControl id="mileage" mb={4}>
-          <FormLabel>Mileage</FormLabel>
-          <Input
-            type="number"
-            name="mileage"
-            value={carData.mileage || ''}
-            onChange={handleChange}
-            placeholder="Mileage"
-          />
-        </FormControl>
-
-        {/* Price */}
-        <FormControl id="price" mb={4}>
-          <FormLabel>Price</FormLabel>
-          <Input
-            type="number"
-            name="price"
-            value={carData.price || ''}
-            onChange={handleChange}
-            placeholder="Price"
-          />
-        </FormControl>
-
-        {/* Features */}
-        <FormControl id="features" mb={4}>
-          <FormLabel>Features</FormLabel>
-          <Input
-            type="text"
-            name="features"
-            value={carData.features || ''}
-            onChange={handleChange}
-            placeholder="Features"
-          />
-        </FormControl>
-
-        {/* Condition */}
-        <FormControl id="condition" mb={4} isRequired>
-          <FormLabel>Condition</FormLabel>
-          <Select name="condition" value={carData.condition || ''} onChange={handleChange}>
-            <option value="">Select Condition</option>
-            <option value="new">New</option>
-            <option value="used">Used</option>
-            <option value="classic">Classic</option>
-          </Select>
-        </FormControl>
-
-        {/* Image Upload */}
-        <FormControl id="image" mb={6}>
-          <FormLabel>Upload New Image</FormLabel>
-          <Input type="file" accept="image/*" onChange={handleImageChange} />
-        </FormControl>
-
-        {/* Submit Button */}
-        <Button
-          type="submit"
-          colorScheme="blue"
-          isLoading={loading}
-          w="100%"
-          mb={4}
+        {/* Car Image */}
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          maxWidth="300px"
+          width="100%"
+          height="300px" // Fixed height for the square aspect ratio
+          overflow="hidden" // Hide overflow
+          mx="auto" // Center the image horizontally
+          mb={4} // Margin bottom for spacing
         >
-          {loading ? <Spinner /> : "Update Car"}
-        </Button>
+          {currentImage && ( // Conditional rendering for the image
+            <Image
+              src={currentImage}
+              alt="Current Car"
+              boxSize="100%"
+              objectFit="cover" // Cover the area
+              borderRadius="md"
+            />
+          )}
+        </Box>
 
-        {/* Delete Car Button */}
-        <Button
-          onClick={handleDelete}
-          colorScheme="red"
-          variant="outline"
-          w="100%"
+        {/* Car Details Inputs */}
+        <Flex
+          direction="column"
+          gap={4}
+          flexGrow={1} // Allow this section to grow
         >
-          Delete Car
-        </Button>
+          <Flex justify="space-between" flexWrap="wrap">
+            <FormControl id="make" isRequired width="30%">
+              <FormLabel>Make</FormLabel>
+              <Input
+                type="text"
+                name="make"
+                value={carData.make || ''}
+                onChange={handleChange}
+                placeholder="Make"
+              />
+            </FormControl>
+
+            <FormControl id="model" isRequired width="30%">
+              <FormLabel>Model</FormLabel>
+              <Input
+                type="text"
+                name="model"
+                value={carData.model || ''}
+                onChange={handleChange}
+                placeholder="Model"
+              />
+            </FormControl>
+
+            <FormControl id="year" isRequired width="30%">
+              <FormLabel>Year</FormLabel>
+              <Input
+                type="number"
+                name="year"
+                value={carData.year || ''}
+                onChange={handleChange}
+                placeholder="Year"
+              />
+            </FormControl>
+          </Flex>
+
+          <Flex justify="space-between" flexWrap="wrap">
+            <FormControl id="vin" width="30%">
+              <FormLabel>VIN</FormLabel>
+              <Input
+                type="text"
+                name="vin"
+                value={carData.vin || ''}
+                onChange={handleChange}
+                placeholder="VIN"
+              />
+            </FormControl>
+
+            <FormControl id="mileage" width="30%">
+              <FormLabel>Mileage</FormLabel>
+              <Input
+                type="number"
+                name="mileage"
+                value={carData.mileage || ''}
+                onChange={handleChange}
+                placeholder="Mileage"
+              />
+            </FormControl>
+
+            <FormControl id="price" width="30%">
+              <FormLabel>Price</FormLabel>
+              <Input
+                type="number"
+                name="price"
+                value={carData.price || ''}
+                onChange={handleChange}
+                placeholder="Price"
+              />
+            </FormControl>
+          </Flex>
+
+          <Flex justify="space-between" flexWrap="wrap">
+            <FormControl id="features" width="30%">
+              <FormLabel>Features</FormLabel>
+              <Input
+                type="text"
+                name="features"
+                value={carData.features || ''}
+                onChange={handleChange}
+                placeholder="Features"
+              />
+            </FormControl>
+
+            <FormControl id="condition" isRequired width="30%">
+              <FormLabel>Condition</FormLabel>
+              <Select name="condition" value={carData.condition || ''} onChange={handleChange}>
+                <option value="">Select Condition</option>
+                <option value="new">New</option>
+                <option value="used">Used</option>
+                <option value="classic">Classic</option>
+              </Select>
+            </FormControl>
+          </Flex>
+
+          {/* Image Upload */}
+          <FormControl id="image">
+            <FormLabel>Upload New Image</FormLabel>
+            <Input type="file" accept="image/*" onChange={handleImageChange} />
+          </FormControl>
+        </Flex>
       </Box>
     </Flex>
   );
