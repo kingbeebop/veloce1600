@@ -13,3 +13,14 @@ export interface Car {
   created_at: string | null;  // Nullable
   updated_at: string | null;  // Nullable
 }
+
+export interface CarData {
+  make: string | null;
+  model: string |null;
+  year: number | null;
+  vin: string | null;
+  mileage: number | null;
+  price: number | null;
+  features: string | null;
+  condition: string | null;
+}

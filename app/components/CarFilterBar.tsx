@@ -1,172 +1,152 @@
-"use client";
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Input,
-  Button,
   IconButton,
+  Button,
   useDisclosure,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  FormControl,
-  FormLabel,
-  Input as ChakraInput,
+  Collapse,
+  VStack,
   Select,
-} from '@chakra-ui/react';
-import { SearchIcon, AddIcon } from '@chakra-ui/icons';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '../redux/store';
-import { searchCars, addCar } from '../redux/slices/carSlice';
-import { Car } from '../types/car'; // Adjust the import path as necessary
+  Text,
+  Spinner,
+} from "@chakra-ui/react";
+import { SearchIcon, AddIcon, ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../redux/store"; // Import RootState
+import { updateFilters, resetAndFilterCars } from "../redux/slices/filterSlice";
+import { fetchCars } from "../redux/slices/carSlice";
+import SubmitCar from "./SubmitCar";
 
 const CarFilterBar: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [newCar, setNewCar] = useState<Car>({
-    id: 0, // Placeholder; id will be set on the server
-    make: null,
-    model: null,
-    year: null,
-    vin: null,
-    mileage: null,
-    price: null,
-    features: null,
-    condition: null,
-    image: null,
-    owner: null,
-    created_at: null,
-    updated_at: null,
-  });
+  
+  // Local state for controlled inputs
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [priceFilterType, setPriceFilterType] = useState<'greater' | 'less' | null>(null);
+  const [priceValue, setPriceValue] = useState<number | null>(null);
+  const [conditionFilter, setConditionFilter] = useState<'New' | 'Used' | 'Classic' | null>(null);
+  const [isFiltersOpen, setIsFiltersOpen] = useState<boolean>(false);
+
+  // Get the filter state from Redux
+  const filterState = useSelector((state: RootState) => state.filters);
+
+  // Set loading state based on filterState initialization
+  const isLoading = filterState === undefined; 
+
+  // Effect to handle filter updates
+  useEffect(() => {
+    const filters = {
+      searchTerm,
+      priceFilter: priceValue !== null && priceFilterType
+        ? { operator: priceFilterType, value: priceValue }
+        : undefined,
+      conditionFilter,
+    };
+    
+    // Dispatch filters update only when local state changes
+    dispatch(updateFilters(filters));
+  }, [searchTerm, priceFilterType, priceValue, conditionFilter, dispatch]);
+
+  const handleFetchCars = async () => {
+    await dispatch(fetchCars({}));
+  };
 
   const handleSearch = () => {
-    dispatch(searchCars(searchTerm));
+    handleFetchCars();
+    setSearchTerm(""); // Optionally reset the search term after fetching
   };
 
-  const handleAddCar = () => {
-    // Dispatch the action to add the car
-    dispatch(addCar(newCar));
-    onClose(); // Close the modal
+  const handleClearFilters = () => {
+    // Dispatch the action to reset filters and refresh cars
+    dispatch(resetAndFilterCars());
+    // Reset local state as well
+    setSearchTerm("");
+    setPriceFilterType(null);
+    setPriceValue(null);
+    setConditionFilter(null);
   };
+
+  if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+        <Spinner size="lg" />
+      </Box>
+    );
+  }
 
   return (
-    <Box display="flex" alignItems="center" justifyContent="center" p={4} bg="gray.100" width="100%">
-      <Box display="flex" alignItems="center" width="33%" maxWidth="600px" justifyContent="center">
-        <Input 
-          placeholder="Search cars..." 
+    <Box display="flex" flexDirection="column" alignItems="center" p={4} width="100%">
+      <Box display="flex" alignItems="center" width="100%" maxWidth="600px" justifyContent="center">
+        <Input
+          placeholder="Search cars..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          width="150px" // Adjusted width for smaller input
+          onChange={(e) => setSearchTerm(e.target.value)} // Controlled input
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleSearch(); // Fetch cars when Enter is pressed
+            }
+          }}
+          width="150px"
           mr={2}
         />
-        <IconButton 
-          aria-label="Search Cars" 
-          icon={<SearchIcon />} 
-          onClick={handleSearch}
-          size="sm" // Smaller button size
-        />
-        <IconButton 
-          aria-label="Add Car" 
-          icon={<AddIcon />} 
-          onClick={onOpen} 
-          ml={2} // Spacing between buttons
-          size="sm" // Smaller button size
+        <IconButton aria-label="Search Cars" icon={<SearchIcon />} onClick={handleSearch} size="sm" />
+        <IconButton aria-label="Add Car" icon={<AddIcon />} onClick={onOpen} ml={2} size="sm" />
+        <IconButton
+          aria-label="Filters"
+          icon={isFiltersOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
+          onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+          ml={2}
+          size="sm"
         />
       </Box>
-      
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Add New Car</ModalHeader>
-          <ModalBody>
-            <FormControl>
-              <FormLabel>Make</FormLabel>
-              <ChakraInput 
-                value={newCar.make || ''}
-                onChange={(e) => setNewCar({ ...newCar, make: e.target.value })}
-              />
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>Model</FormLabel>
-              <ChakraInput 
-                value={newCar.model || ''}
-                onChange={(e) => setNewCar({ ...newCar, model: e.target.value })}
-              />
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>Year</FormLabel>
-              <ChakraInput 
-                type="number" 
-                value={newCar.year || ''}
-                onChange={(e) => setNewCar({ ...newCar, year: Number(e.target.value) || null })}
-              />
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>VIN</FormLabel>
-              <ChakraInput 
-                value={newCar.vin || ''}
-                onChange={(e) => setNewCar({ ...newCar, vin: e.target.value })}
-              />
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>Mileage</FormLabel>
-              <ChakraInput 
-                type="number" 
-                value={newCar.mileage || ''}
-                onChange={(e) => setNewCar({ ...newCar, mileage: Number(e.target.value) || null })}
-              />
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>Price</FormLabel>
-              <ChakraInput 
-                type="number" 
-                value={newCar.price || ''}
-                onChange={(e) => setNewCar({ ...newCar, price: Number(e.target.value) || null })}
-              />
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>Features</FormLabel>
-              <ChakraInput 
-                value={newCar.features || ''}
-                onChange={(e) => setNewCar({ ...newCar, features: e.target.value })}
-              />
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>Condition</FormLabel>
-              <Select 
-                value={newCar.condition || ''} 
-                onChange={(e) => setNewCar({ ...newCar, condition: e.target.value as 'new' | 'used' | 'classic' })}
+
+      <Collapse in={isFiltersOpen}>
+        <Box mt={2} p={4} borderWidth={1} borderRadius="md" borderColor="gray.200" width="100%" maxWidth="600px">
+          <VStack spacing={4}>
+            <Text fontWeight="bold">Filters</Text>
+            <Select
+              placeholder="Select condition"
+              value={conditionFilter ?? undefined}
+              onChange={(e) => setConditionFilter(e.target.value as 'New' | 'Used' | 'Classic')}
+            >
+              <option value="New">New</option>
+              <option value="Used">Used</option>
+              <option value="Classic">Classic</option>
+            </Select>
+            <Box display="flex" alignItems="center" width="100%">
+              <Select
+                placeholder="Select price filter type"
+                value={priceFilterType ?? undefined}
+                onChange={(e) => setPriceFilterType(e.target.value as 'greater' | 'less')}
+                mr={2}
               >
-                <option value="" disabled>Select condition</option>
-                <option value="new">New</option>
-                <option value="used">Used</option>
-                <option value="classic">Classic</option>
+                <option value="greater">Greater than</option>
+                <option value="less">Less than</option>
               </Select>
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>Image</FormLabel>
-              <ChakraInput 
-                type="file"
-                onChange={(e) => {
-                  const file = e.target.files?.[0] || null; // Use optional chaining
-                  setNewCar({ ...newCar, image: file ? file.name : null }); // Store the file name or null
-                }}
+              <Input
+                placeholder="Price"
+                value={priceValue === null ? "" : priceValue}
+                onChange={(e) => setPriceValue(e.target.value ? Number(e.target.value) : null)} // Keep as number or null
+                type="number"
+                min="0"
               />
-            </FormControl>
-          </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="blue" mr={3} onClick={handleAddCar}>
-              Submit
-            </Button>
-            <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+            </Box>
+            <Box display="flex" justifyContent="space-between" width="100%">
+              <Button onClick={handleFetchCars} colorScheme="teal">
+                Fetch Cars
+              </Button>
+              <Button onClick={handleClearFilters} colorScheme="red">
+                Clear Filters
+              </Button>
+            </Box>
+          </VStack>
+        </Box>
+      </Collapse>
+
+      {/* SubmitCar component in modal */}
+      <SubmitCar isOpen={isOpen} onClose={onClose} onSubmit={handleFetchCars} />
     </Box>
   );
 };

@@ -1,22 +1,28 @@
-// app/car/page.tsx
 "use client";
 
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchCars } from '../../redux/slices/carSlice';
-import { AppDispatch } from '../../redux/store';
-import { RootState } from '../../types/redux/types'
+import { fetchCars } from '../../redux/slices/carSlice'; // Ensure you're importing from the correct slice
+import { AppDispatch, RootState } from '../../redux/store';
 import { Box, Grid, Spinner, Text, Alert, AlertIcon } from '@chakra-ui/react';
 import CarTile from '../../components/CarTile';
 import CarFilterBar from '../../components/CarFilterBar';
 
 const CarList: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
-  const { cars, loading, error } = useSelector((state: RootState) => state.cars);
+  
+  // Map the correct part of the state using the "cars" slice.
+  const { cars, allCars, loading, error } = useSelector((state: RootState) => state.cars); 
 
   useEffect(() => {
-    dispatch(fetchCars({ page: 1, pageSize: 20 }));
+    // Dispatch the correct action to fetch cars
+    dispatch(fetchCars({}));
   }, [dispatch]);
+
+  useEffect(() => {
+    console.log('Updated cars:', cars);
+    console.log('All Cars:', allCars);
+  }, [cars, allCars]);
 
   if (loading) {
     return (
@@ -25,7 +31,7 @@ const CarList: React.FC = () => {
       </Box>
     );
   }
-  
+
   if (error) {
     return (
       <Alert status="error" mb={4}>
@@ -39,14 +45,14 @@ const CarList: React.FC = () => {
     <Box>
       <CarFilterBar /> {/* Add the CarFilterBar here */}
       <Box display="flex" justifyContent="center" width="100%">
-        <Grid 
+        <Grid
           templateColumns="1fr" // Ensures one tile per row
-          gap={6} 
+          gap={6}
           maxWidth="600px" // Adjust as needed for the width of the tiles
           width="100%"      // Ensures it takes the full width of the container
           paddingX={4}     // Optional: adds some horizontal padding
         >
-          {cars.map(car => (
+          {cars.map((car) => (
             <CarTile key={car.id} car={car} />
           ))}
         </Grid>

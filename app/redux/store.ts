@@ -1,26 +1,33 @@
 import { configureStore } from '@reduxjs/toolkit';
 import carReducer from './slices/carSlice';
-import ownerReducer from './slices/ownerSlice'; // New owner slice
-import saleReducer from './slices/saleSlice'; // New sale slice
-import { RootState } from '../types/redux/types'; // Ensure this path is correct
+import ownerReducer from './slices/ownerSlice';
+import saleReducer from './slices/saleSlice';
+import filterReducer from './slices/filterSlice';
+import authReducer from './slices/authSlice'
 
+// Create the store
 const store = configureStore({
   reducer: {
+    auth: authReducer, // Authentication state
+    filters: filterReducer, // Filter state
     cars: carReducer, // Car state
     owners: ownerReducer, // Owner state
     sales: saleReducer, // Sale state
   },
-  // Enable Redux DevTools extension if installed
-  devTools: process.env.NODE_ENV !== 'production',
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware({ thunk: true }),
+  devTools: process.env.NODE_ENV !== 'production', // Enable Redux DevTools in non-production environments
 });
 
-// Define types for RootState and AppDispatch
+// Infer the `RootState` type from the store itself
+export type RootState = ReturnType<typeof store.getState>;
+
+// Define types for `AppDispatch`
 export type AppDispatch = typeof store.dispatch;
 
-// Optional: You can include a custom thunk type if you need to specify extra configurations in your thunks
+// Optional: Custom thunk configuration type
 export interface AsyncThunkConfig {
   state: RootState;
-  // Add any additional properties here if needed
+  // Add any additional properties if needed
 }
 
 export default store;
