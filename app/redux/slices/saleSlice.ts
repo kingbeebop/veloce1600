@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { Sale } from '../../types/sale';
-import { saveSaleAPI, updateSaleAPI } from '../../utils/api';
+import { saveSale as saveSaleAPI, updateSale as updateSaleAPI} from '../../utils/api';
 
 interface SaleState {
   sales: Sale[];

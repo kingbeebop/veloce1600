@@ -1,36 +1,49 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
-import { Button, Box, Flex } from '@chakra-ui/react'; // Import Chakra components
+import { Button, Box, Container, Typography } from '@mui/material'; // Import MUI components
 import CarDetail from '../../../components/CarDetail';
 import { fetchCarById } from '../../../utils/api';
 import { Car } from '../../../types/car';
+import { useEffect, useState } from 'react';
 
-const CarPage = async ({ params }: { params: { id: string } }) => {
+const CarPage = ({ params }: { params: { id: string } }) => {
   const router = useRouter();
   const carId = Number(params.id);
-  let car: Car | null = null;
+  const [car, setCar] = useState<Car | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  try {
-    car = await fetchCarById(carId);
-  } catch (error) {
-    console.error("Error fetching car data:", error);
-  }
+  useEffect(() => {
+    const getCarData = async () => {
+      try {
+        const fetchedCar = await fetchCarById(carId);
+        setCar(fetchedCar);
+      } catch (error) {
+        console.error("Error fetching car data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getCarData();
+  }, [carId]);
 
   return (
-    <Box padding="4" maxW="1200px" margin="0 auto">
-      <Flex justify="flex-start" mb={4}> 
-        <Button colorScheme="teal" onClick={() => router.push('/cars')}>
+    <Container maxWidth="lg" sx={{ padding: 4 }}>
+      <Box display="flex" justifyContent="flex-start" marginBottom={2}>
+        <Button variant="contained" color="primary" onClick={() => router.push('/cars')}>
           Back to Cars
         </Button>
-      </Flex>
+      </Box>
 
-      {car ? (
+      {loading ? (
+        <Typography variant="h6">Loading...</Typography>
+      ) : car ? (
         <CarDetail car={car} carId={carId} />
       ) : (
-        <Box>Car not found</Box>
+        <Typography variant="h6">Car not found</Typography>
       )}
-    </Box>
+    </Container>
   );
 };
 

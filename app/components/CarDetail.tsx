@@ -1,29 +1,42 @@
+"use client";
+
 import React, { useState } from 'react';
 import {
   Box,
-  Flex,
+  Button,
+  IconButton,
+  Input,
   FormControl,
   FormLabel,
-  Input,
   Select,
-  Image,
-  useToast,
-  IconButton,
-} from '@chakra-ui/react';
-import { AiOutlineEdit, AiOutlineDelete } from 'react-icons/ai'; // Import icons
-import { updateCar, deleteCar } from '../utils/api';
+  Typography,
+  Avatar,
+  useTheme,
+  Snackbar,
+  MenuItem,
+} from '@mui/material';
+import { AiOutlineEdit, AiOutlineSave, AiOutlineDelete } from 'react-icons/ai';
+import { useDropzone } from 'react-dropzone';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '../redux/store';
+import { updateCar, deleteCar } from '../redux/slices/carSlice';
 import { Car, CarData } from '../types/car';
+import { SelectChangeEvent } from '@mui/material/Select';
+
+type CarCondition = 'New' | 'Used' | 'Classic' | null;
 
 interface CarDetailProps {
-  car: Car; // Expecting a car object of type Car passed as a prop
-  carId: number; // To use in update
+  car: Car;
+  carId: number;
 }
 
 const CarDetail: React.FC<CarDetailProps> = ({ car, carId }) => {
-  const toast = useToast();
+  const theme = useTheme();
+  const dispatch = useDispatch<AppDispatch>();
   const [currentImage, setCurrentImage] = useState<string | null>(car.image || null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [carData, setCarData] = useState<CarData>({
     make: car.make,
     model: car.model,
@@ -32,252 +45,234 @@ const CarDetail: React.FC<CarDetailProps> = ({ car, carId }) => {
     mileage: car.mileage,
     price: car.price,
     features: car.features,
-    condition: car.condition,
+    condition: car.condition as CarCondition,
   });
 
-  // Handle form field changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+  const [snackbarMessage, setSnackbarMessage] = useState<string>('');
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setCarData((prev) => ({
       ...prev,
-      [name]: value === '' ? null : value,
+      [name]: ['mileage', 'price', 'year'].includes(name) ? Number(value) || null : value,
     }));
   };
 
-  // Handle image upload
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setImageFile(e.target.files[0]);
+  const handleSelectChange = (e: SelectChangeEvent<string>) => {
+    const { name, value } = e.target;
+    setCarData((prev) => ({
+      ...prev,
+      [name]: value === '' ? null : (value as CarCondition),
+    }));
+  };
+
+  const handleImageChange = (acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      setImageFile(acceptedFiles[0]);
+      setCurrentImage(URL.createObjectURL(acceptedFiles[0]));
     }
   };
 
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  const { getRootProps, getInputProps } = useDropzone({
+    onDrop: handleImageChange,
+    accept: { 'image/*': [] },
+    multiple: false,
+  });
 
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      setImageFile(files[0]);
+      setCurrentImage(URL.createObjectURL(files[0]));
+    }
+  };
+
+  const handleSubmit = async () => {
+    setLoading(true);
     try {
-      await updateCar(carId, carData, imageFile);
-      toast({
-        title: "Success",
-        description: "Car updated successfully!",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
-      setCurrentImage(imageFile ? URL.createObjectURL(imageFile) : currentImage);
-      setImageFile(null);
+      await dispatch(updateCar({ id: carId, updatedCar: carData, imageFile })).unwrap();
+      showSnackbar('Car updated successfully!');
+      resetForm();
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update car. Please try again.",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-      console.error("Update failed", error);
+      showSnackbar('Something went wrong');
+      console.error('Update failed', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle car deletion with confirmation toast
   const handleDelete = async () => {
-    const confirmDelete = confirm("Permanently delete this car? This cannot be undone.");
+    const confirmDelete = window.confirm("Permanently delete this car? This cannot be undone.");
     if (!confirmDelete) return;
 
     try {
-      await deleteCar(carId);
-      toast({
-        title: "Car Deleted",
-        description: "Car has been permanently deleted.",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
+      await dispatch(deleteCar(carId)).unwrap();
+      showSnackbar('Car has been permanently deleted.');
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete car. Please try again.",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-      console.error("Delete failed", error);
+      showSnackbar('Failed to delete car. Please try again.');
+      console.error('Delete failed', error);
     }
   };
 
-  return (
-    <Flex
-      direction="column"
-      align="center"
-      justify="center"
-      py={8}
-      w="100%"
-      maxW="1200px"
-      mx="auto"
-    >
-      <Box
-        as="form"
-        onSubmit={handleSubmit}
-        bg="white"
-        p={8}
-        borderRadius="md"
-        boxShadow="lg"
-        display="flex"
-        flexDirection="column"
-        height="90vh" // Constrain height to 90% of the viewport
-        overflowY="hidden" // Prevent overflow
-      >
-        {/* Edit and Delete Icon Buttons */}
-        <Flex justify="flex-end">
-          <IconButton
-            icon={<AiOutlineEdit />}
-            colorScheme="blue"
-            onClick={handleSubmit}
-            aria-label="Edit Car"
-            isLoading={loading}
-            mr={2}
-          />
-          <IconButton
-            icon={<AiOutlineDelete />}
-            colorScheme="red"
-            onClick={handleDelete}
-            aria-label="Delete Car"
-          />
-        </Flex>
+  const showSnackbar = (message: string) => {
+    setSnackbarMessage(message);
+    setSnackbarOpen(true);
+  };
 
-        {/* Car Image */}
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
+  const resetForm = () => {
+    setImageFile(null);
+    setIsEditMode(false);
+    setCurrentImage(car.image || null);
+  };
+
+  return (
+    <Box
+      sx={{
+        padding: theme.spacing(4),
+        borderRadius: 2,
+        boxShadow: theme.shadows[5],
+        maxWidth: 1200,
+        margin: 'auto',
+        backgroundColor: theme.palette.background.paper,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+      }}
+    >
+      {/* Header Row for Edit and Delete Buttons */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h4">Car Details</Typography>
+        <Box>
+          <IconButton
+            onClick={() => setIsEditMode((prev) => !prev)}
+            aria-label={isEditMode ? 'Save Car' : 'Edit Car'}
+            color="primary"
+            disabled={loading}
+          >
+            {isEditMode ? <AiOutlineSave onClick={handleSubmit} /> : <AiOutlineEdit />}
+          </IconButton>
+          <IconButton onClick={handleDelete} aria-label="Delete Car" color="error">
+            <AiOutlineDelete />
+          </IconButton>
+        </Box>
+      </Box>
+
+      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 4 }}>
+        {/* Image display and upload section */}
         <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          maxWidth="300px"
-          width="100%"
-          height="300px" // Fixed height for the square aspect ratio
-          overflow="hidden" // Hide overflow
-          mx="auto" // Center the image horizontally
-          mb={4} // Margin bottom for spacing
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            flex: 1,
+            border: `1px dashed ${theme.palette.divider}`,
+            borderRadius: 2,
+            position: 'relative',
+            overflow: 'hidden',
+            padding: theme.spacing(2),
+          }}
+          {...getRootProps()}
         >
-          {currentImage && ( // Conditional rendering for the image
-            <Image
-              src={currentImage}
-              alt="Current Car"
-              boxSize="100%"
-              objectFit="cover" // Cover the area
-              borderRadius="md"
-            />
+          {!isEditMode ? (
+            currentImage ? (
+              <Avatar
+                src={currentImage}
+                alt="Current Car"
+                variant="rounded"
+                sx={{ width: '100%', height: 300, objectFit: 'cover', mb: 2 }}
+              />
+            ) : (
+              <Typography variant="h2" sx={{ fontSize: '100px', margin: 0 }}>
+                🚗
+              </Typography>
+            )
+          ) : (
+            <>
+              <input {...getInputProps()} />
+              {currentImage ? (
+                <Avatar
+                  src={currentImage}
+                  alt="Uploaded Car"
+                  variant="rounded"
+                  sx={{ width: '100%', height: 300, objectFit: 'cover', mb: 2 }}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    height: 300,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      backgroundColor: theme.palette.action.hover,
+                    },
+                  }}
+                >
+                  <Typography color="textSecondary">Drop an image here or click to select a file</Typography>
+                </Box>
+              )}
+            </>
+          )}
+
+          {isEditMode && (
+            <>
+              <Typography variant="body2" color="textSecondary" align="center">
+                Drag and drop an image or use the button above to upload
+              </Typography>
+            </>
           )}
         </Box>
 
-        {/* Car Details Inputs */}
-        <Flex
-          direction="column"
-          gap={4}
-          flexGrow={1} // Allow this section to grow
-        >
-          <Flex justify="space-between" flexWrap="wrap">
-            <FormControl id="make" isRequired width="30%">
-              <FormLabel>Make</FormLabel>
-              <Input
-                type="text"
-                name="make"
-                value={carData.make || ''}
-                onChange={handleChange}
-                placeholder="Make"
-              />
+        {/* Car details input fields */}
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {['make', 'model', 'vin', 'mileage', 'price', 'features', 'year', 'condition'].map((field, index) => (
+            <FormControl key={index} fullWidth>
+              <FormLabel>{capitalizeFirstLetter(field)}</FormLabel>
+              {field === 'condition' ? (
+                <Select
+                  name={field}
+                  value={String(carData[field as keyof CarData] || '')}
+                  onChange={handleSelectChange}
+                  disabled={!isEditMode}
+                >
+                  <MenuItem value="">Select Condition</MenuItem>
+                  <MenuItem value="New">New</MenuItem>
+                  <MenuItem value="Used">Used</MenuItem>
+                  <MenuItem value="Classic">Classic</MenuItem>
+                </Select>
+              ) : (
+                <Input
+                  name={field}
+                  value={carData[field as keyof CarData] || ''}
+                  onChange={handleInputChange}
+                  disabled={!isEditMode}
+                  type={['mileage', 'price', 'year'].includes(field) ? 'number' : 'text'}
+                />
+              )}
             </FormControl>
-
-            <FormControl id="model" isRequired width="30%">
-              <FormLabel>Model</FormLabel>
-              <Input
-                type="text"
-                name="model"
-                value={carData.model || ''}
-                onChange={handleChange}
-                placeholder="Model"
-              />
-            </FormControl>
-
-            <FormControl id="year" isRequired width="30%">
-              <FormLabel>Year</FormLabel>
-              <Input
-                type="number"
-                name="year"
-                value={carData.year || ''}
-                onChange={handleChange}
-                placeholder="Year"
-              />
-            </FormControl>
-          </Flex>
-
-          <Flex justify="space-between" flexWrap="wrap">
-            <FormControl id="vin" width="30%">
-              <FormLabel>VIN</FormLabel>
-              <Input
-                type="text"
-                name="vin"
-                value={carData.vin || ''}
-                onChange={handleChange}
-                placeholder="VIN"
-              />
-            </FormControl>
-
-            <FormControl id="mileage" width="30%">
-              <FormLabel>Mileage</FormLabel>
-              <Input
-                type="number"
-                name="mileage"
-                value={carData.mileage || ''}
-                onChange={handleChange}
-                placeholder="Mileage"
-              />
-            </FormControl>
-
-            <FormControl id="price" width="30%">
-              <FormLabel>Price</FormLabel>
-              <Input
-                type="number"
-                name="price"
-                value={carData.price || ''}
-                onChange={handleChange}
-                placeholder="Price"
-              />
-            </FormControl>
-          </Flex>
-
-          <Flex justify="space-between" flexWrap="wrap">
-            <FormControl id="features" width="30%">
-              <FormLabel>Features</FormLabel>
-              <Input
-                type="text"
-                name="features"
-                value={carData.features || ''}
-                onChange={handleChange}
-                placeholder="Features"
-              />
-            </FormControl>
-
-            <FormControl id="condition" isRequired width="30%">
-              <FormLabel>Condition</FormLabel>
-              <Select name="condition" value={carData.condition || ''} onChange={handleChange}>
-                <option value="">Select Condition</option>
-                <option value="new">New</option>
-                <option value="used">Used</option>
-                <option value="classic">Classic</option>
-              </Select>
-            </FormControl>
-          </Flex>
-
-          {/* Image Upload */}
-          <FormControl id="image">
-            <FormLabel>Upload New Image</FormLabel>
-            <Input type="file" accept="image/*" onChange={handleImageChange} />
-          </FormControl>
-        </Flex>
+          ))}
+        </Box>
       </Box>
-    </Flex>
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={handleSnackbarClose}
+        message={snackbarMessage}
+      />
+    </Box>
   );
+};
+
+// Helper function to capitalize the first letter of a string
+const capitalizeFirstLetter = (string: string) => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
 export default CarDetail;

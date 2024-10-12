@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { Owner } from '../../types/owner';
-import { saveOwnerAPI, updateOwnerAPI } from '../../utils/api';
+import { saveOwnerAPI, updateOwner as updateOwnerAPI} from '../../utils/api';
 
 interface OwnerState {
   owners: Owner[];

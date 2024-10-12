@@ -7,11 +7,11 @@ export interface Car {
   mileage: number | null;  // Nullable
   price: number | null;  // Nullable
   features: string | null;  // Nullable
-  condition: 'new' | 'used' | 'classic' | null;  // Nullable
+  condition: 'New' | 'Used' | 'Classic' | null;  // Nullable
   image?: string | null;  // Optional and nullable
-  owner: number | null;  // Assuming owner is represented by user ID, nullable
-  created_at: string | null;  // Nullable
-  updated_at: string | null;  // Nullable
+  owner?: number | null;  // Assuming owner is represented by user ID, nullable
+  created_at?: string | null;  // Nullable
+  updated_at?: string | null;  // Nullable
 }
 
 export interface CarData {
@@ -22,5 +22,8 @@ export interface CarData {
   mileage: number | null;
   price: number | null;
   features: string | null;
-  condition: string | null;
+  condition: 'New' | 'Used' | 'Classic' | null;
+  owner?: number | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }

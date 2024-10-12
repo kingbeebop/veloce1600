@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { Box, Text, Heading, Avatar } from '@chakra-ui/react';
+import { Box, Typography, Avatar, Card, CardContent } from '@mui/material';
 import { Car } from '../types/car';
 import { useRouter } from 'next/navigation';
 
@@ -23,40 +23,21 @@ const CarTile: React.FC<CarTileProps> = ({ car, setLoading }) => {
   const defaultAvatar = "🚗"; // Car emoji for default avatar
 
   return (
-    <Box
-      borderWidth="1px"
-      borderRadius="lg"
-      p={4}
-      shadow="md"
-      onClick={handleClick}
-      _hover={{ shadow: "lg" }}
-      display="flex"
-      justifyContent="space-between"
-      alignItems="center"
-      cursor="pointer"
-    >
-      <Box display="flex" flexGrow={1} alignItems="center">
-        {avatarSrc ? (
-          <Avatar
-            src={avatarSrc}
-            size="md"
-            mr={4}
-          />
-        ) : (
-          <Avatar
-            name={defaultAvatar}
-            bg="gray.300"
-            color="black"
-            size="md"
-            mr={4}
-          >
-            {defaultAvatar}
-          </Avatar>
-        )}
-        <Heading size="md">{car.make} {car.model}</Heading>
-      </Box>
-      <Text fontWeight="bold">${car.price}</Text>
-    </Box>
+    <Card onClick={handleClick} sx={{ display: 'flex', cursor: 'pointer', mb: 2, boxShadow: 3, '&:hover': { boxShadow: 6 } }}>
+      <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          {avatarSrc ? (
+            <Avatar src={avatarSrc} sx={{ width: 56, height: 56, mr: 2 }} />
+          ) : (
+            <Avatar sx={{ width: 56, height: 56, bgcolor: 'gray.300', color: 'black', mr: 2 }}>
+              {defaultAvatar}
+            </Avatar>
+          )}
+          <Typography variant="h6">{car.make} {car.model}</Typography>
+        </Box>
+        <Typography variant="subtitle1" fontWeight="bold">${car.price}</Typography>
+      </CardContent>
+    </Card>
   );
 };
 
